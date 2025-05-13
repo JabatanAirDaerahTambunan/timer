@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Countdown Timer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* Apply Inter font globally */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* Dark background (gray-900) */
+            color: #f3f4f6; /* Light text (gray-100) */
+        }
+
+        /* Style for the main title */
+        .title-countdown {
+            font-weight: 900; /* Black weight */
+            font-size: 2.5rem; /* Adjust size as needed */
+            letter-spacing: 0.1em;
+            color: #ffffff;
+        }
+        .title-timer {
+            font-weight: 500; /* Medium weight */
+            font-size: 1.5rem; /* Adjust size as needed */
+            letter-spacing: 0.3em;
+            color: #d1d5db; /* gray-300 */
+            margin-top: -0.5rem; /* Pull it closer to COUNTDOWN */
+        }
+
+        /* Style for the time circles */
+        .time-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: #93c5fd; /* blue-300 - light blue background */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border: 3px solid #60a5fa; /* blue-400 */
+            box-shadow: 0 0 15px rgba(96, 165, 250, 0.5), /* Inner glow */
+                        inset 0 0 10px rgba(255, 255, 255, 0.3); /* Inner highlight */
+        }
+        /* Add outer rings/glow effect */
+        .time-circle::before, .time-circle::after {
+            content: '';
+            position: absolute;
+            top: -8px; left: -8px; right: -8px; bottom: -8px;
+            border-radius: 50%;
+            border: 2px solid rgba(96, 165, 250, 0.3); /* Fainter outer ring */
+            z-index: -1;
+        }
+         .time-circle::after {
+            top: -14px; left: -14px; right: -14px; bottom: -14px;
+            border: 1px solid rgba(96, 165, 250, 0.15); /* Faintest outer ring */
+         }
+
+
+        /* Style for the digits inside circles */
+        .time-digit {
+            font-size: 2.5rem; /* Large digits */
+            font-weight: 700; /* Bold */
+            color: #1f2937; /* Dark gray text (gray-800) */
+            line-height: 1;
+        }
+
+        /* Style for the labels (HOUR, MINUTE, SECOND) */
+        .time-label {
+            font-size: 0.75rem; /* Small text */
+            font-weight: 500;
+            color: #d1d5db; /* gray-300 */
+            letter-spacing: 0.1em;
+            margin-top: 0.75rem; /* Space above label */
+            text-transform: uppercase;
+        }
+
+        /* Style for inputs */
+        input[type="number"], input[type="datetime-local"] {
+            background-color: #374151; /* gray-700 */
+            border-color: #4b5563; /* gray-600 */
+            color: #f3f4f6; /* gray-100 */
+            padding: 0.5rem 1rem; /* Adjust padding */
+            border-radius: 0.5rem; /* rounded-lg */
+            border-width: 1px;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+            width: 100%;
+            text-align: center;
+            font-size: 1.125rem; /* text-lg */
+            outline: none;
+        }
+        input[type="number"]:focus, input[type="datetime-local"]:focus {
+            background-color: #4b5563; /* gray-600 */
+            border-color: #60a5fa; /* blue-400 */
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5); /* focus:ring-2 focus:ring-blue-500 equivalent */
+        }
+         /* Hide spinner buttons on number input */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        input[type=number] {
+          -moz-appearance: textfield; /* Firefox */
+        }
+        /* Style date/time picker icon color */
+        input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.8); /* Make the icon lighter */
+            cursor: pointer;
+        }
+
+
+        /* Style for buttons */
+        button {
+            transition: all 0.2s ease-in-out;
+            min-width: 90px;
+            min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            border: 1px solid transparent; /* Base border */
+            font-weight: 600; /* semibold */
+            padding: 0.5rem 1.25rem; /* py-2 px-5 */
+            border-radius: 0.5rem; /* rounded-lg */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
+        }
+        /* Specific button styles */
+        #startButton { background-color: #3b82f6; color: white; border-color: #3b82f6;} /* blue-500 */
+        #startButton:hover:not(:disabled) { background-color: #2563eb; border-color: #2563eb;} /* blue-600 */
+        #pauseButton { background-color: #eab308; color: white; border-color: #eab308;} /* yellow-500 */
+        #pauseButton:hover:not(:disabled) { background-color: #ca8a04; border-color: #ca8a04;} /* yellow-600 */
+        #resetButton { background-color: #ef4444; color: white; border-color: #ef4444;} /* red-500 */
+        #resetButton:hover:not(:disabled) { background-color: #dc2626; border-color: #dc2626;} /* red-600 */
+        #shareButton { background-color: #10b981; color: white; border-color: #10b981;} /* emerald-500 */
+        #shareButton:hover:not(:disabled) { background-color: #059669; border-color: #059669;} /* emerald-600 */
+
+        /* Focus state */
+         button:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4); /* Example focus ring */
+         }
+        /* Disabled state */
+        button:disabled {
+             background-color: #4b5563; /* gray-600 */
+             color: #9ca3af; /* gray-400 */
+             border-color: #4b5563;
+             opacity: 0.7;
+             cursor: not-allowed;
+             box-shadow: none; /* Remove shadow when disabled */
+        }
+
+
+        /* Style for the message box */
+        #messageBox {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: 8px;
+            background-color: rgba(243, 244, 246, 0.9); /* Light background (gray-100) */
+            color: #1f2937; /* Dark text */
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out, transform 0.3s ease-out;
+            z-index: 1000;
+            pointer-events: none;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid #d1d5db; /* gray-300 */
+        }
+        #messageBox.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-10px);
+        }
+
+        /* Style for icons */
+        .icon {
+            width: 1.25rem; /* 20px */
+            height: 1.25rem;
+        }
+
+        /* Footer style */
+        .footer-text {
+            margin-top: 2rem;
+            font-size: 0.8rem;
+            color: #6b7280; /* gray-500 */
+            letter-spacing: 0.05em;
+        }
+
+        /* Utility class to hide elements */
+        .hidden {
+            display: none !important; /* Use !important to override potential Tailwind classes */
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .title-countdown { font-size: 2rem; }
+            .title-timer { font-size: 1.25rem; }
+            .time-circle { width: 80px; height: 80px; border-width: 2px;}
+            .time-circle::before, .time-circle::after { display: none; } /* Hide outer rings on small screens */
+            .time-digit { font-size: 1.8rem; }
+            .time-label { font-size: 0.65rem; margin-top: 0.5rem;}
+            .time-display-container { gap: 1rem; /* Reduce gap */ }
+            /* Adjust controls stacking only if they are visible */
+            .creator-mode #timerControls { flex-direction: column; gap: 0.75rem; }
+            /* Adjust input stacking only if they are visible */
+            .creator-mode .input-section { flex-direction: column; align-items: center; gap: 1rem;}
+            .creator-mode .input-section > div { width: 100%; max-width: 320px; /* Limit input width */ }
+        }
+
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div id="appContainer" class="max-w-2xl w-full text-center"> <h1 class="title-countdown">COUNTDOWN</h1>
+        <h2 class="title-timer mb-10 sm:mb-12">TIMER</h2>
+
+        <div class="flex justify-center items-start gap-4 sm:gap-8 time-display-container mb-10 sm:mb-12">
+            <div class="flex flex-col items-center">
+                <div class="time-circle">
+                    <span id="hoursDisplay" class="time-digit">00</span>
+                </div>
+                <div class="time-label">Hour</div>
+            </div>
+            <div class="flex flex-col items-center">
+                <div class="time-circle">
+                    <span id="minutesDisplay" class="time-digit">00</span>
+                </div>
+                <div class="time-label">Minute</div>
+            </div>
+            <div class="flex flex-col items-center">
+                <div class="time-circle">
+                    <span id="secondsDisplay" class="time-digit">00</span>
+                </div>
+                <div class="time-label">Second</div>
+            </div>
+        </div>
+
+        <div id="inputSection" class="flex flex-col sm:flex-row justify-center items-start gap-4 sm:gap-8 mb-8 input-section hidden">
+            <div class="w-full sm:w-1/2">
+                <label for="minutesInput" class="block text-sm font-medium text-gray-400 mb-2">Set Duration (Minutes)</label>
+                <input type="number" id="minutesInput" min="0" value="" placeholder="Minutes" class=""> <p id="minutesInputError" class="text-red-400 text-xs mt-2 h-4"></p> </div>
+
+             <div class="flex items-center justify-center sm:h-20"> <span class="text-gray-500 font-semibold">OR</span>
+            </div>
+
+            <div class="w-full sm:w-1/2">
+                 <label for="dateTimePicker" class="block text-sm font-medium text-gray-400 mb-2">Set Target Date & Time</label>
+                <input type="datetime-local" id="dateTimePicker" class="">
+                <p id="dateInputError" class="text-red-400 text-xs mt-2 h-4"></p> </div>
+        </div>
+
+
+        <div id="timerControls" class="flex justify-center gap-3 sm:gap-4 mb-8 hidden">
+             <button id="startButton" disabled> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
+                </svg>
+                Start
+            </button>
+            <button id="pauseButton" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon icon-pause">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25v13.5m-7.5-13.5v13.5" />
+                </svg>
+                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon icon-resume hidden">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
+                </svg>
+                <span id="pauseButtonText">Pause</span>
+            </button>
+            <button id="resetButton">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                </svg>
+                Reset
+            </button>
+             <button id="shareButton" disabled> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="icon">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
+                </svg>
+                Share
+            </button>
+        </div>
+
+         <div id="publicMessage" class="text-gray-400 mt-4 hidden">
+            No countdown has been set or shared via this link.
+        </div>
+
+
+        <div class="footer-text">
+            @ REALLYGREATSITE </div>
+    </div>
+
+    <div id="messageBox"></div>
+
+    <script>
+        // --- Constants ---
+        // const DEFAULT_MINUTES = 5; // No longer needed for default reset
+
+        // --- DOM Elements ---
+        const appContainer = document.getElementById('appContainer');
+        const inputSection = document.getElementById('inputSection');
+        const timerControls = document.getElementById('timerControls');
+        const minutesInput = document.getElementById('minutesInput');
+        const dateTimePicker = document.getElementById('dateTimePicker');
+        const hoursDisplay = document.getElementById('hoursDisplay');
+        const minutesDisplay = document.getElementById('minutesDisplay');
+        const secondsDisplay = document.getElementById('secondsDisplay');
+        const startButton = document.getElementById('startButton');
+        const pauseButton = document.getElementById('pauseButton');
+        const resetButton = document.getElementById('resetButton');
+        const shareButton = document.getElementById('shareButton');
+        const minutesInputError = document.getElementById('minutesInputError');
+        const dateInputError = document.getElementById('dateInputError');
+        const messageBox = document.getElementById('messageBox');
+        const pauseButtonText = document.getElementById('pauseButtonText');
+        const pauseIcon = pauseButton.querySelector('.icon-pause');
+        const resumeIcon = pauseButton.querySelector('.icon-resume');
+        const publicMessage = document.getElementById('publicMessage');
+
+        // --- State Variables ---
+        let countdownInterval = null;
+        let remainingSeconds = 0;
+        let targetTimestamp = null; // Store the target end time timestamp (from URL or creator input)
+        let isPaused = false;
+        let isCreatorMode = false;
+
+        // --- Utility Functions ---
+
+        function updateDisplay() {
+            const displaySeconds = Math.max(0, remainingSeconds);
+            const hours = Math.floor(displaySeconds / 3600);
+            const minutes = Math.floor((displaySeconds % 3600) / 60);
+            const seconds = displaySeconds % 60;
+            hoursDisplay.textContent = String(hours).padStart(2, '0');
+            minutesDisplay.textContent = String(minutes).padStart(2, '0');
+            secondsDisplay.textContent = String(seconds).padStart(2, '0');
+        }
+
+        function showMessage(message) {
+            messageBox.textContent = message;
+            messageBox.classList.add('show');
+            if (messageBox.timeoutId) clearTimeout(messageBox.timeoutId);
+            messageBox.timeoutId = setTimeout(() => {
+                messageBox.classList.remove('show');
+                messageBox.timeoutId = null;
+            }, 3000);
+        }
+
+        function stopTimerInterval() {
+             clearInterval(countdownInterval);
+             countdownInterval = null;
+             isPaused = false; // Ensure not paused when interval stops
+        }
+
+        // Calculates remaining seconds based on the targetTimestamp
+        function calculateRemainingSeconds() {
+            if (targetTimestamp) {
+                // Ensure targetTimestamp is treated as a number
+                const targetTime = Number(targetTimestamp);
+                if (!isNaN(targetTime)) {
+                     return Math.max(0, Math.round((targetTime - new Date().getTime()) / 1000));
+                }
+            }
+            return 0;
+        }
+
+
+        // Function to update button states based on timer status and remaining time
+        function updateButtonStates() {
+            if (!isCreatorMode) return; // Only update buttons in creator mode
+
+            const running = countdownInterval && !isPaused;
+            const paused = countdownInterval && isPaused;
+            // Enable start/share only if a valid future target time is set
+            const hasValidFutureTarget = targetTimestamp && calculateRemainingSeconds() > 0;
+
+            startButton.disabled = !hasValidFutureTarget || running || paused;
+            pauseButton.disabled = !running && !paused; // Enable pause only when running/paused
+            resetButton.disabled = false; // Reset always enabled for creator
+            shareButton.disabled = !targetTimestamp; // Enable share only if a target time is set (past or future)
+            minutesInput.disabled = running || paused;
+            dateTimePicker.disabled = running || paused;
+
+            if (paused) {
+                pauseButtonText.textContent = 'Resume';
+                pauseIcon.classList.add('hidden');
+                resumeIcon.classList.remove('hidden');
+            } else {
+                pauseButtonText.textContent = 'Pause';
+                pauseIcon.classList.remove('hidden');
+                resumeIcon.classList.add('hidden');
+            }
+        }
+
+        // --- Timer Control Functions ---
+
+        function startTimer() {
+            // Start/Resume logic (only for creator mode)
+            if (!isCreatorMode) return;
+
+            if (countdownInterval && !isPaused) { showMessage("Timer already running."); return; }
+
+            if (isPaused) { // Resume
+                isPaused = false;
+                remainingSeconds = calculateRemainingSeconds(); // Recalculate just in case
+                if (remainingSeconds <= 0) {
+                     stopTimerInterval(); updateDisplay(); showMessage("Target time has passed."); updateButtonStates(); return;
+                }
+                countdownInterval = setInterval(tick, 1000);
+                showMessage("Timer resumed.");
+                updateButtonStates();
+                return;
+            }
+
+            // Start new timer
+            remainingSeconds = calculateRemainingSeconds();
+            if (remainingSeconds <= 0) { showMessage("Cannot start: Target time is not in the future."); return; }
+
+            stopTimerInterval();
+            isPaused = false;
+            countdownInterval = setInterval(tick, 1000);
+            updateButtonStates();
+            showMessage("Timer started!");
+        }
+
+        function tick() {
+            // This function runs in both modes if an interval is active
+            if (isPaused && isCreatorMode) return; // Pause only works in creator mode
+
+            remainingSeconds = calculateRemainingSeconds(); // Recalculate based on target time
+            updateDisplay();
+
+            if (remainingSeconds <= 0) {
+                stopTimerInterval();
+                updateDisplay(); // Ensure display shows 00:00:00
+                showMessage("Time's up!"); // Show message for everyone
+
+                // Play sound (runs for everyone)
+                try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    oscillator.connect(gainNode); gainNode.connect(audioContext.destination);
+                    oscillator.type = 'sine'; oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
+                    oscillator.start(audioContext.currentTime); oscillator.stop(audioContext.currentTime + 0.5);
+                } catch (e) { console.warn("Could not play sound:", e); }
+
+                targetTimestamp = null; // Clear target timestamp conceptually (won't affect URL param)
+                updateButtonStates(); // Update buttons (only affects creator view)
+            }
+        }
+
+        function pauseTimer() {
+            if (!isCreatorMode) return; // Only creator can pause
+            if (countdownInterval && !isPaused) {
+                isPaused = true;
+                clearInterval(countdownInterval);
+                showMessage("Timer paused.");
+                updateButtonStates();
+            } else if (isPaused) {
+                startTimer(); // Resume
+            }
+        }
+
+        function resetTimer(showMessageFlag = true) {
+            if (!isCreatorMode) return; // Only creator can reset
+
+            stopTimerInterval();
+            targetTimestamp = null; // Clear target timestamp variable
+            dateTimePicker.value = "";
+            minutesInput.value = ""; // Clear minutes input too
+            remainingSeconds = 0;
+            updateDisplay();
+            minutesInputError.textContent = '';
+            dateInputError.textContent = '';
+            updateButtonStates(); // Start/Share should become disabled
+            if (showMessageFlag) showMessage("Timer reset. Set a new time.");
+        }
+
+        // Function to handle sharing
+        function shareTimer() {
+             if (!isCreatorMode || !targetTimestamp) return; // Can only share if creator and target is set
+
+             // Construct the URL with the target timestamp
+             const baseUrl = window.location.href.split('?')[0]; // Get URL without existing query parameters
+             const shareUrl = `${baseUrl}?target=${targetTimestamp}`;
+
+             // Attempt to copy to clipboard
+             navigator.clipboard.writeText(shareUrl).then(() => {
+                 showMessage("Shareable link copied to clipboard!");
+             }).catch(err => {
+                 console.error('Failed to copy link: ', err);
+                 showMessage("Failed to copy link. Share this URL manually: " + shareUrl);
+                 // Fallback: Prompt user to copy manually
+                 window.prompt("Copy this link to share:", shareUrl);
+             });
+        }
+
+        // --- Event Listeners Setup ---
+        function setupEventListeners() {
+            if (isCreatorMode) {
+                // Listener for the Date/Time Picker
+                dateTimePicker.addEventListener('input', () => {
+                    const selectedDateStr = dateTimePicker.value;
+                    dateInputError.textContent = '';
+                    if (!selectedDateStr) { targetTimestamp = null; updateButtonStates(); return; }
+
+                    const selectedDate = new Date(selectedDateStr);
+                    const now = new Date();
+                    if (isNaN(selectedDate.getTime())) { dateInputError.textContent = 'Invalid date/time format.'; targetTimestamp = null; updateButtonStates(); return; }
+
+                    const newTargetTimestamp = selectedDate.getTime();
+                    targetTimestamp = newTargetTimestamp; // Set the target timestamp variable
+
+                    stopTimerInterval(); // Stop any running timer when input changes
+                    remainingSeconds = calculateRemainingSeconds(); // Calculate new remaining time
+                    updateDisplay();
+                    minutesInput.value = ""; minutesInputError.textContent = ''; // Clear other input
+                    updateButtonStates(); // Update buttons (enable start/share if valid)
+                    if (remainingSeconds <= 0) {
+                         dateInputError.textContent = 'Selected date/time is not in the future.';
+                    }
+                });
+
+                // Listener for the Minutes Input
+                minutesInput.addEventListener('input', () => {
+                    const minutes = parseInt(minutesInput.value, 10);
+                    minutesInputError.textContent = '';
+                    if (!isNaN(minutes) && minutes >= 0) {
+                        if (minutes > 9999) {
+                            minutesInputError.textContent = 'Duration too long (max 9999 mins).';
+                            stopTimerInterval(); targetTimestamp = null; remainingSeconds = 0; updateDisplay(); updateButtonStates(); return;
+                        }
+                        stopTimerInterval();
+                        targetTimestamp = new Date().getTime() + (minutes * 60 * 1000); // Calculate target timestamp
+                        remainingSeconds = minutes * 60;
+                        updateDisplay();
+                        dateTimePicker.value = ""; dateInputError.textContent = ''; // Clear other input
+                        updateButtonStates();
+                    } else if (minutesInput.value === '') {
+                        stopTimerInterval(); targetTimestamp = null; remainingSeconds = 0;
+                        updateDisplay(); dateTimePicker.value = ""; dateInputError.textContent = ''; updateButtonStates();
+                    } else {
+                        minutesInputError.textContent = 'Please enter valid positive minutes.';
+                        stopTimerInterval(); targetTimestamp = null; remainingSeconds = 0; updateDisplay(); updateButtonStates();
+                    }
+                });
+
+                // Button Listeners
+                startButton.addEventListener('click', startTimer);
+                pauseButton.addEventListener('click', pauseTimer);
+                resetButton.addEventListener('click', () => resetTimer(true));
+                shareButton.addEventListener('click', shareTimer);
+
+                 // Handle Enter key in minutes input field
+                minutesInput.addEventListener('keypress', function(event) {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        if (!startButton.disabled || isPaused) startTimer();
+                    }
+                });
+            }
+        }
+
+        // --- Initialization ---
+        window.onload = () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            isCreatorMode = urlParams.get('mode') === 'creator';
+            const targetParam = urlParams.get('target'); // Get target timestamp from URL
+
+            if (isCreatorMode) {
+                // --- Creator Mode Setup ---
+                inputSection.classList.remove('hidden');
+                timerControls.classList.remove('hidden');
+                appContainer.classList.add('creator-mode');
+                publicMessage.classList.add('hidden');
+
+                // If target is in URL (e.g., creator reloaded a shared link in creator mode), load it
+                if (targetParam) {
+                     const ts = parseInt(targetParam, 10);
+                     if (!isNaN(ts)) {
+                         targetTimestamp = ts;
+                         // Optionally pre-fill date/time picker if desired (more complex)
+                     }
+                }
+                // Calculate initial state based on potentially loaded targetTimestamp
+                remainingSeconds = calculateRemainingSeconds();
+                updateDisplay();
+                updateButtonStates(); // Set initial button states
+
+            } else {
+                // --- Public Mode Setup ---
+                inputSection.classList.add('hidden');
+                timerControls.classList.add('hidden');
+                appContainer.classList.remove('creator-mode');
+
+                if (targetParam) {
+                    const ts = parseInt(targetParam, 10);
+                    if (!isNaN(ts)) {
+                        targetTimestamp = ts; // Set target from URL parameter
+                        remainingSeconds = calculateRemainingSeconds();
+
+                        if (remainingSeconds > 0) {
+                            publicMessage.classList.add('hidden');
+                            updateDisplay();
+                            // Start the timer automatically for public view
+                            stopTimerInterval();
+                            countdownInterval = setInterval(tick, 1000);
+                        } else {
+                            // Timer already finished based on URL target
+                            remainingSeconds = 0;
+                            updateDisplay();
+                            publicMessage.textContent = "The countdown has finished.";
+                            publicMessage.classList.remove('hidden');
+                        }
+                    } else {
+                         // Invalid target parameter in URL
+                         remainingSeconds = 0; updateDisplay();
+                         publicMessage.textContent = "Invalid countdown link.";
+                         publicMessage.classList.remove('hidden');
+                    }
+                } else {
+                    // No target parameter in URL
+                    remainingSeconds = 0; updateDisplay();
+                    publicMessage.textContent = "No countdown has been set or shared via this link.";
+                    publicMessage.classList.remove('hidden');
+                }
+                // Ensure buttons are visually disabled (though hidden)
+                startButton.disabled = true; pauseButton.disabled = true; resetButton.disabled = true; shareButton.disabled = true;
+            }
+
+            setupEventListeners(); // Add listeners only if needed (creator mode)
+        };
+
+    </script>
+
+</body>
+</html>
